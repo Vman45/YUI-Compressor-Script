@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# min command
+# version 0.1 beta by @websightdesigns
+
+YUICOMPRESSOR="/usr/share/java/yuicompressor-2.4.8.jar"
+MINEXT=".min"
+
+if [ "$1" != '' ]; then
+  if [ "-d $1" ]; then
+    if [ "-f $1/*.css" ]; then
+      cat $1/*.css > $1/style.test.css
+      /usr/bin/java -jar $YUICOMPRESSOR $1/style.test.css -o $1/style.min.css -- charset utf-8 -v
+      rm $1/style.test.css
+    fi
+    if [ "-f $1/*.js" ]; then
+      cat $1/*.js > $1/script.test.js
+      /usr/bin/java -jar $YUICOMPRESSOR $1/script.test.js -o $1/script.min.js -- charset utf-8 -v
+      rm $1/script.test.js
+    fi
+  elif [ "-f $1" ]; then
+    EXT=`echo "$1" | awk -F . '{pribt $NF}"`
+    if [ "$EXT" = 'js' ] || [ "$EXT" = 'css' ]; then
+      if [ "$2" = '' ]; then
+        NEWEXT="$MINEXT.$EXT"
+        MINFILE="${1//.$EXT/$NEWEXT}"
+      elif [ "$2" != '' ]; then
+        MINFILE="$2"
+      fi
+      /usr/bin/java -jar $YUICOMPRESSOR $1 -o $MINFILE --charset utf-8 -v
+      USR=$( ls -l $1 | awk '{ print $3 }' )
+      GRP=$( ls -l $1 | awk '{ print $4 }' )
+      chown $USR:$GRP $MINFILE
+    fi
+  fi
+elif [ "$1" = 'help' ] || [ "$1" = '' ]; then
+  echo "description: uses the YUI Compressor to compress (minify) js and css files."
+  echo ""
+  echo "usage:"
+  echo "sudo min <uncompressed filename> <compressed filename>"
+  echo "sudo min <uncompressed filename>"
+  echo "sudo min <directory>"
+  echo "example: to minify the file script.js just run the command 'sudo min script.js'"
+  echo "filename of <uncompressed filename> must end in \".js\" or \".css\""
+  echo "if <compressed filename> is not specified then \".min\" will be placed before the file extension"
+  echo "if directory is given then it is looking for \".css\" or \".js\" extentions and combine all files with that extention into style.min.css or script.min.css at the given directory"
+  echo ""
+fi
